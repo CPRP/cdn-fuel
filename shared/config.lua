@@ -2,7 +2,7 @@ Config = {}
 Config.FuelDebug = false -- Used for debugging, although there are not many areas in yet (Default: false) + Enables Setfuel Commands (0, 50, 100). 
 Config.ShowNearestGasStationOnly = true -- When enabled, only the nearest gas stations will be shown on the map.
 Config.LeaveEngineRunning = true -- When true, the vehicle's engine will be left running upon exit if the player *HOLDS* F.
-Config.VehicleBlowUp = true -- When true, there will be a configurable chance of the vehicle blowing up, if you fuel while the engine is on.
+Config.VehicleBlowUp = false -- When true, there will be a configurable chance of the vehicle blowing up, if you fuel while the engine is on.
 Config.BlowUpChance = 5 -- Percentage for Chance of Engine Explosion (Default: 5% or 5) 
 Config.CostMultiplier = 3.0 -- Amount to multiply 1 by. This indicates fuel price. (Default: $3.0/l or 3.0)
 Config.GlobalTax = 15.0 -- The tax, in %, that people will be charged at the pump. (Default: 15% or 15.0)
@@ -12,7 +12,7 @@ Config.RefuelTime = 600 -- Highly recommended to leave at 600. This value will b
 Config.FuelTargetExport = true -- This is only used to fix this issue: https://github.com/CodineDev/cdn-fuel/issues/3. <br> <br> If you don't have this issue and haven't installed this exports in qb-target, then this should be false. Otherwise there will be an error.
 
 -- Syphoning --
-Config.UseSyphoning = true -- Follow the Syphoning Install Guide to enable this option!
+Config.UseSyphoning = false -- Follow the Syphoning Install Guide to enable this option!
 Config.SyphonDebug = false -- Used for Debugging the syphon portion!
 Config.SyphonFuelDecor = Config.FuelDecor -- Do not touch! (Default: "_FUEL_LEVEL")
 Config.SyphonKitCap = 50 -- Maximum amount (in L) the syphon kit can fit!
@@ -48,6 +48,7 @@ Config.PlayerControlledFuelPrices = true -- This gives you the option to disable
 Config.GasStationNameChanges = true -- This gives you the option to disable people being able to change the name of their gas station, only recommended if it becomes a problem.
 Config.NameChangeMinChar = 6 -- This is the minimum length that a Gas Station's name must be.
 Config.NameChangeMaxChar = 25 -- This is the maximum length that a Gas Station's name must be.
+Config.WaitTime = 100 -- This is the wait time after callbacks, if you are having issues with menus not popping up, or being greyed out, up this to around ~300, it is not recommended to go over ~750, as menus will get slower and more unresponsive the higher you go. (Fixes this issue: https://www.shorturl.at/eqS19)
 
 -- Phone --
 Config.RenewedPhonePayment = false -- When true, payments will be sent to the players phone with a notification, giving them the opportunity to accept or decline payment. If the cancel after paying for fuel, money will be returned. 
@@ -74,9 +75,18 @@ Config.ElectricVehicles = { -- The list of Electric Vehicles in the base game. Y
     "imorgon",
     "dilettante",
     "khamelion",
+    -- Custom Cars
+    "gmcev4",
+    "cybertruck",
+    "hummersuv",
+    "Mache",
+    "teslax",
+    "ocnetrongt",
+    "x3mache21",
+    "lamodels",
 }
 Config.ElectricSprite = 620 -- This is for when the player is in an electric charger, the blips with change to this sprite. (Sprite with a car with a bolt going through it: 620)
-
+Config.ElectricChargerModel = true -- If you wish, you can set this to false to add your own props, or use a ymap for the props instead.
 -- Basic Configuration Settings
 
 Config.NoFuelUsage = { -- This is for you to put vehicles that you don't want to use fuel. 
@@ -493,13 +503,13 @@ Config.GasStations = { -- Configuration options for various gas station related 
     },
     [17] = {
         zones = {
-            vector2(1768.56, 3328.41),
-            vector2(1780.68, 3335.98),
-            vector2(1789.02, 3319.32),
-            vector2(1776.52, 3314.39)
+            vector2(1774.24, 3308.71),
+            vector2(1752.65, 3345.83),
+            vector2(1784.47, 3357.95),
+            vector2(1808.71, 3321.21)
         },
-        minz = 40.0,
-        maxz = 42.6,
+        minz = 39.0,
+        maxz = 44.6,
         pedmodel = "a_m_m_indian_01",
         cost = 750000,
         shutoff = false,

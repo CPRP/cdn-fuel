@@ -148,7 +148,9 @@ if Config.ShowNearestGasStationOnly then
 	end)
 
 	CreateThread(function()
-		TriggerServerEvent('cdn-fuel:server:updatelocationlabels')
+		if Config.PlayerOwnedGasStationsEnabled then
+			TriggerServerEvent('cdn-fuel:server:updatelocationlabels')
+		end
 		Wait(1000)
 		local currentGasBlip = 0
 		while true do
@@ -157,20 +159,26 @@ if Config.ShowNearestGasStationOnly then
 			local closestCoords
 			local closestLocation
 			local location = 0
+			local label = "Gas Station" -- Prevent nil just in case, set default name. 
 			for _, ourCoords in pairs(Config.GasStations) do
 				location = location + 1
-				local gasStationCoords = vector3(Config.GasStations[location].pedcoords.x, Config.GasStations[location].pedcoords.y, Config.GasStations[location].pedcoords.z)
-				local dstcheck = #(coords - gasStationCoords)
-				if dstcheck < closest then
-					closest = dstcheck
-					closestCoords = gasStationCoords
-					closestLocation = location
+				if not (location > #Config.GasStations) then -- Make sure we are not going over the amount of locations available.
+					local gasStationCoords = vector3(Config.GasStations[location].pedcoords.x, Config.GasStations[location].pedcoords.y, Config.GasStations[location].pedcoords.z)
+					local dstcheck = #(coords - gasStationCoords)
+					if dstcheck < closest then
+						closest = dstcheck
+						closestCoords = gasStationCoords
+						closestLocation = location
+						label = Config.GasStations[closestLocation].label
+					end
+				else
+					break
 				end
 			end
 			if DoesBlipExist(currentGasBlip) then
 				RemoveBlip(currentGasBlip)
 			end
-			currentGasBlip = CreateBlip(closestCoords, Config.GasStations[closestLocation].label)
+			currentGasBlip = CreateBlip(closestCoords, label)
 			Wait(10000)
 		end
 	end)
@@ -188,14 +196,12 @@ else
 	CreateThread(function()
 		TriggerServerEvent('cdn-fuel:server:updatelocationlabels')
 		Wait(1000)
-		local location = 0
 		local gasStationCoords
-		for _ in pairs(Config.GasStations) do
-			location = location + 1
+		for i = 1, #Config.GasStations, 1 do
+			local location = i
 			gasStationCoords = vector3(Config.GasStations[location].pedcoords.x, Config.GasStations[location].pedcoords.y, Config.GasStations[location].pedcoords.z)
+			GasStationBlips[location] = CreateBlip(gasStationCoords, Config.GasStations[location].label)
 		end
-		GasStationBlips[location] = CreateBlip(gasStationCoords, Config.GasStations[location].label)
-		Wait(10000) -- 10 Second Checks for Updating Blip Names
 	end)
 end
 
@@ -356,8 +362,20 @@ RegisterNetEvent('cdn-fuel:client:grabnozzle', function()
 end)
 
 RegisterNetEvent('cdn-fuel:client:returnnozzle', function()
-	if IsHoldingElectricNozzle() then 
-		SetElectricNozzle("putback") 
+	if Config.ElectricVehicleCharging then
+		if IsHoldingElectricNozzle() then 
+			SetElectricNozzle("putback") 
+		else
+			holdingnozzle = false
+			TargetCreated = false
+			LoadAnimDict("pickup_object")
+			TaskPlayAnim(ped, "pickup_object", "putdown_low", 2.0, 8.0, -1, 17, 0, 0, 0, 0)
+			TriggerServerEvent("InteractSound_SV:PlayOnSource", "putbacknozzle", 0.4)
+			StopAnimTask(ped, 'pickup_object', 'putdown_low', 1.0)
+			Wait(250)
+			if Config.FuelTargetExport then exports['qb-target']:AllowRefuel(false) end
+			DeleteObject(fuelnozzle)
+		end
 	else
 		holdingnozzle = false
 		TargetCreated = false
@@ -374,6 +392,10 @@ end)
 AddEventHandler('onResourceStop', function(resource)
 	if resource == GetCurrentResourceName() then
 		DeleteObject(fuelnozzle)
+		-- Remove Blips from map so they dont double up.
+		for i = 1, #GasStationBlips, 1 do
+			RemoveBlip(GasStationBlips[i])
+		end
 	end
 end)
 
@@ -490,7 +512,7 @@ RegisterNetEvent('cdn-fuel:client:SendMenuToServer', function()
 				},
 				{
 					header = Lang:t("menu_header_cash"),
-					txt = Lang:t("menu_pay_with_cash") .. playercashamount .. ")",
+					txt = Lang:t("menu_pay_with_cash") .. playercashamount,
 					icon = "fas fa-usd",
 					params = {
 						event = "cdn-fuel:client:FinalMenu",
@@ -733,8 +755,14 @@ CreateThread(function()
 				icon = "fas fa-bolt",
 				label = Lang:t("insert_electric_nozzle"),
 				canInteract = function()
-					if inGasStation and not refueling and IsHoldingElectricNozzle() then
-						return true
+					if Config.ElectricVehicleCharging == true then
+						if inGasStation and not refueling and IsHoldingElectricNozzle() then
+							return true
+						else
+							return false
+						end
+					else
+						return false
 					end
 				end
 			},
@@ -832,7 +860,7 @@ RegisterNetEvent('cdn-fuel:client:jerrycanfinalmenu', function(purchasetype)
 		TriggerServerEvent('cdn-fuel:server:purchase:jerrycan', purchasetype)
 	else
 		if purchasetype == 'bank' then QBCore.Functions.Notify(Lang:t("not_enough_money_in_bank"), 'error') end
-		if purchasetype == "cash" then QBCore.Functions.Notify(Lang:t("not_enough_money_in_pocket"), 'error') end
+		if purchasetype == "cash" then QBCore.Functions.Notify(Lang:t("not_enough_money_in_cash"), 'error') end
 	end
 end)
 
@@ -846,7 +874,7 @@ RegisterNetEvent('cdn-fuel:client:purchasejerrycan', function()
 		},
 		{
 			header = Lang:t("menu_header_cash"),
-			txt = Lang:t("menu_pay_with_cash") .. playercashamount .. ")",
+			txt = Lang:t("menu_pay_with_cash") .. playercashamount,
 			icon = "fas fa-usd",
 			params = {
 				event = "cdn-fuel:client:jerrycanfinalmenu",
@@ -947,7 +975,7 @@ RegisterNetEvent('cdn-fuel:jerrycan:refuelvehicle', function(data)
 end)
 
 RegisterNetEvent('cdn-fuel:jerrycan:refueljerrycan', function(data)
-	FetchStationInfo("fuelprice")
+	FetchStationInfo('all')
 	Wait(100)
 	if Config.PlayerOwnedGasStationsEnabled then
 		FuelPrice = (1 * StationFuelPrice)
@@ -976,13 +1004,7 @@ RegisterNetEvent('cdn-fuel:jerrycan:refueljerrycan', function(data)
 		if tonumber(refuel.amount) < 10 then refueltimer = Config.RefuelTime * 10 end
 		local price = (tonumber(refuel.amount) * FuelPrice) + GlobalTax(tonumber(refuel.amount) * FuelPrice)
 		if not CanAfford(price, "cash") then QBCore.Functions.Notify(Lang:t("not_enough_money_in_cash"), 'error') return end
-		if GetIsVehicleEngineRunning(vehicle) and Config.VehicleBlowUp then
-			local Chance = math.random(1, 100)
-			if Chance <= Config.BlowUpChance then
-				AddExplosion(vehicleCoords, 5, 50.0, true, false, true)
-				return
-			end 
-		end
+
 		JerrycanProp = CreateObject(GetHashKey('w_am_jerrycan'), 1.0, 1.0, 1.0, true, true, false)
 		local lefthand = GetPedBoneIndex(PlayerPedId(), 18905)
 		AttachEntityToEntity(JerrycanProp, PlayerPedId(), lefthand, 0.11 --[[Left - Right (Kind of)]] , 0.05--[[Up - Down]], 0.27 --[[Forward - Backward]], -15.0, 170.0, -90.42, 0, 1, 0, 1, 0, 1)
@@ -1004,6 +1026,12 @@ RegisterNetEvent('cdn-fuel:jerrycan:refueljerrycan', function(data)
 			local syphonData = data.itemData
 			local srcPlayerData = QBCore.Functions.GetPlayerData()
 			TriggerServerEvent('cdn-fuel:info', "add", tonumber(refuel.amount), srcPlayerData, syphonData)
+			if Config.PlayerOwnedGasStationsEnabled and not Config.UnlimitedFuel then
+				TriggerServerEvent('cdn-fuel:station:server:updatereserves', "remove", fuelamount, ReserveLevels, CurrentLocation)
+				TriggerServerEvent('cdn-fuel:station:server:updatebalance', "add", fuelamount, StationBalance, CurrentLocation, FuelPrice)
+			else
+				if Config.FuelDebug then print("Config.PlayerOwnedGasStationsEnabled == false or Config.UnlimitedFuel == true, this means reserves will not be changed.") end
+			end
 			TriggerServerEvent('cdn-fuel:server:PayForFuel', tonumber(refuel.amount) * FuelPrice, "cash", FuelPrice)
 		end, function() -- Play When Cancel
 			SetEntityVisible(fuelnozzle, true, 0)
@@ -1269,4 +1297,3 @@ RegisterNetEvent('cdn-syphoning:client:callcops', function(coords)
 		end
 	end
 end)
-
