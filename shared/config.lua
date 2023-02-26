@@ -48,7 +48,7 @@ Config.PlayerControlledFuelPrices = true -- This gives you the option to disable
 Config.GasStationNameChanges = true -- This gives you the option to disable people being able to change the name of their gas station, only recommended if it becomes a problem.
 Config.NameChangeMinChar = 6 -- This is the minimum length that a Gas Station's name must be.
 Config.NameChangeMaxChar = 25 -- This is the maximum length that a Gas Station's name must be.
-Config.WaitTime = 100 -- This is the wait time after callbacks, if you are having issues with menus not popping up, or being greyed out, up this to around ~300, it is not recommended to go over ~750, as menus will get slower and more unresponsive the higher you go. (Fixes this issue: https://www.shorturl.at/eqS19)
+Config.WaitTime = 300 -- This is the wait time after callbacks, if you are having issues with menus not popping up, or being greyed out, up this to around ~300, it is not recommended to go over ~750, as menus will get slower and more unresponsive the higher you go. (Fixes this issue: https://www.shorturl.at/eqS19)
 
 -- Phone --
 Config.RenewedPhonePayment = false -- When true, payments will be sent to the players phone with a notification, giving them the opportunity to accept or decline payment. If the cancel after paying for fuel, money will be returned. 
@@ -773,6 +773,28 @@ Config.GasStations = { -- Configuration options for various gas station related 
         electricchargercoords = vector4(837.7554, -793.623, 25.23, 105.22),
         label = "Ottos Autos Globe Oil",
     },
+    [28] = { -- Island Pumps
+    zones = {
+        vector2(4504.4418945312, -4514.1196289062),
+        vector2(4499.0830078125, -4499.35546875),
+        vector2(4474.7719726562, -4508.521484375),
+        vector2(4480.205078125, -4523.4506835938)
+    },
+    minz = 3.0,
+    maxz = 5.0,
+    pedmodel = "a_m_m_indian_01",
+    cost = 450000,
+    shutoff = false,
+    pedcoords = {
+        x = 4494.75,
+        y = -4511.33,
+        z = 3.15,
+        h = 27.14,
+    },
+    electriccharger = nil,
+    electricchargercoords = vector4(4498.95, -4509.88, 3.1, 24.66),
+    label = "Island Gas Pumps",
+    },
     -- Example of a New Location
     -- [29] = {
     --     zones = {
@@ -782,7 +804,7 @@ Config.GasStations = { -- Configuration options for various gas station related 
     --     minz = 0,
     --     maxz = 800.0,
     --     pedmodel = "a_m_m_indian_01", -- This is the model of the ped that will be created for the management menu @ the gas station.
-    --     cost = 750000, -- This is the cost of the gas station for someone purchasing it, not including tax.
+    --     cost = 450000, -- This is the cost of the gas station for someone purchasing it, not including tax.
     --     shutoff = false, -- Leave as false, this is for when someone turns off the pumps. 
     --     pedcoords = { -- Vector4, X, Y, Z & Heading.
     --         x = -342.37,
